@@ -33,6 +33,8 @@ The display uses the following GPIO mapping for the RGB interface:
 
 ## UI Features
 
+> **Note**: The current UI features and layout are **temporary (임시)** for testing purposes and will be updated in the future.
+
 The dashboard provides a sleek, dark-themed UI featuring:
 *   **RPM Arc**: A large, central 12000 RPM gauge (550x550) with animated revving.
 *   **Temperature Bar**: Engine coolant temperature candle bar on the left side.
