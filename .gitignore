@@ -1,0 +1,19 @@
+# ESP-IDF Build Directory
+build/
+
+# ESP-IDF Configuration
+sdkconfig
+sdkconfig.old
+
+# ESP-IDF Component Manager
+managed_components/
+dependencies.lock
+
+# VS Code and IDEs
+.vscode/
+.clangd/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
