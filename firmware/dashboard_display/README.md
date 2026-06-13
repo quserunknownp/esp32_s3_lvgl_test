@@ -1,6 +1,6 @@
 # ESP32-S3 LVGL EV Dashboard
 
-A high-performance vehicle dashboard UI built with LVGL and ESP-IDF, specifically configured for ESP32-S3 N16R8 modules and an 800x480 RGB LCD. It receives telemetry data over CAN Bus (TWAI) and renders smooth 60fps animations.
+A high-performance vehicle dashboard UI built with LVGL and ESP-IDF, specifically configured for ESP32-S3 N16R8 modules and an 800x480 RGB LCD. It receives telemetry data over CAN Bus (TWAI) and renders stable ~35fps animations.
 
 ## Hardware Specifications
 
@@ -10,7 +10,7 @@ A high-performance vehicle dashboard UI built with LVGL and ESP-IDF, specificall
 *   **Display**: 5.0" RGB LCD (QT-5000H40R79L-6N5W12 / ILI6485)
     *   **Resolution**: 800 x 480
     *   **Interface**: 16-bit RGB (RGB565)
-    *   **Optimal Pixel Clock**: `16 MHz` ~ `18 MHz` (Lowered from 25MHz to prevent EDMA starvation and PSRAM bandwidth bottlenecks during LVGL cache misses).
+    *   **Optimal Pixel Clock**: `16 MHz` ~ `18 MHz` (Lowered from 25MHz to prevent EDMA starvation and PSRAM bandwidth bottlenecks during LVGL cache misses). At this clock, the physical refresh rate is capped at around 35 FPS.
 *   **CAN Transceiver**: TJA1050 / SN65HVD230 (Connected to GPIO 1 & 2)
 
 ## Pin Configuration
@@ -28,7 +28,7 @@ A high-performance vehicle dashboard UI built with LVGL and ESP-IDF, specificall
 
 ## Software Architecture & Features
 
-*   **LVGL Rendering**: Fixed to 60fps (`LVGL_TASK_MAX_DELAY_MS 15`) to ensure immediate UI updates. UI components use `lv_anim_t` to interpolate discrete CAN messages (e.g., 20Hz) into perfectly smooth visuals.
+*   **LVGL Rendering**: LVGL task delay is configured to `LVGL_TASK_MAX_DELAY_MS 15` to ensure immediate UI updates, yielding a stable ~35 FPS bounded by the 16MHz PCLK limit. UI components use `lv_anim_t` to interpolate discrete CAN messages (e.g., 20Hz) into perfectly smooth visuals.
 *   **CAN Communication (TWAI)**: Operates at 250Kbps. Listens for 0x10A (RPM), 0x101 (Battery Temp), 0x102 (Inverter Temp), 0x103 (Motor Temp), and 0x104 (SoC).
 *   **Drive Mode Toggle**: Shorting GPIO 10 to GND toggles the torque mode.
     *   UI: Top-left LED turns Green (ECO) or Red (SPORT).
