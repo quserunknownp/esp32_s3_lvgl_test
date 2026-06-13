@@ -1,54 +1,43 @@
-# ESP32-S3 LVGL Dashboard
+# ESP32-S3 LVGL EV Dashboard
 
-A high-performance vehicle dashboard UI built with LVGL and ESP-IDF, specifically configured for ESP32-S3 N16R8 modules and an 800x480 RGB LCD.
+A high-performance vehicle dashboard UI built with LVGL and ESP-IDF, specifically configured for ESP32-S3 N16R8 modules and an 800x480 RGB LCD. It receives telemetry data over CAN Bus (TWAI) and renders smooth 60fps animations.
 
 ## Hardware Specifications
 
 *   **MCU**: ESP32-S3 (N16R8)
     *   **Flash**: 16 MB (QIO)
-    *   **PSRAM**: 8 MB (Octal SPI)
+    *   **PSRAM**: 8 MB (Octal SPI @ 80MHz) - *Required for 800x480 Framebuffers*
 *   **Display**: 5.0" RGB LCD (QT-5000H40R79L-6N5W12 / ILI6485)
     *   **Resolution**: 800 x 480
     *   **Interface**: 16-bit RGB (RGB565)
-    *   **Pixel Clock**: 25 MHz
+    *   **Optimal Pixel Clock**: `16 MHz` ~ `18 MHz` (Lowered from 25MHz to prevent EDMA starvation and PSRAM bandwidth bottlenecks during LVGL cache misses).
+*   **CAN Transceiver**: TJA1050 / SN65HVD230 (Connected to GPIO 1 & 2)
 
-## Pin Configuration (RGB Interface)
+## Pin Configuration
 
-The display uses the following GPIO mapping for the RGB interface:
-
-*   **Control Pins**:
-    *   `PCLK`: 11
-    *   `HSYNC`: 12
-    *   `VSYNC`: 13
-    *   `DE`: 14
+### RGB LCD Interface
+*   **Control Pins**: `PCLK`: 11, `HSYNC`: 12, `VSYNC`: 13, `DE`: 14
 *   **Red (R3~R7)**: 4, 5, 6, 7, 15
 *   **Green (G2~G7)**: 16, 17, 18, 8, 3, 9
 *   **Blue (B3~B7)**: 42, 41, 40, 39, 38
 
-## Software Stack
+### Peripherals
+*   **CAN TX**: GPIO 1
+*   **CAN RX**: GPIO 2
+*   **Mode Switch Button**: GPIO 10 (Internal Pull-up, active low)
 
-*   **Framework**: [ESP-IDF v5.5.4](https://github.com/espressif/esp-idf)
-*   **UI Library**: [LVGL v8.4.0](https://lvgl.io/)
-*   **Optimization**: `-Os` (Size optimization is used to bypass a GCC 14.2 bug for RGB panels).
+## Software Architecture & Features
 
-## UI Features
-
-> **Note**: The current UI features and layout are for demonstration and testing purposes, and are subject to change.
-
-The dashboard provides a sleek, dark-themed UI featuring:
-*   **RPM Arc**: A large, central 12000 RPM gauge (550x550) with animated revving.
-*   **Temperature Bar**: Engine coolant temperature candle bar on the left side.
-*   **State of Charge (SoC)**: Battery percentage candle bar on the right side.
-*   **Inverter Temperature**: Wide temperature bar at the bottom center.
+*   **LVGL Rendering**: Fixed to 60fps (`LVGL_TASK_MAX_DELAY_MS 15`) to ensure immediate UI updates. UI components use `lv_anim_t` to interpolate discrete CAN messages (e.g., 20Hz) into perfectly smooth visuals.
+*   **CAN Communication (TWAI)**: Operates at 250Kbps. Listens for 0x10A (RPM), 0x101 (Battery Temp), 0x102 (Inverter Temp), 0x103 (Motor Temp), and 0x104 (SoC).
+*   **Drive Mode Toggle**: Shorting GPIO 10 to GND toggles the torque mode.
+    *   UI: Top-left LED turns Green (ECO) or Red (SPORT).
+    *   CAN: Sends a 1-byte message to `0x201` (`0x00` or `0x01`) to switch the Sevcon Motor Controller's Drive Profile.
+*   **Dynamic Temperature Candles**: Thermal bars implement 3-stage color gradients (Green -> Yellow -> Red) based on safe operating limits.
 
 ## Build and Flash
 
-1.  Make sure you have ESP-IDF v5.5.4 installed and activated.
-2.  Set the target to ESP32-S3:
-    ```bash
-    idf.py set-target esp32s3
-    ```
-3.  Build, flash, and monitor:
-    ```bash
-    idf.py build flash monitor
-    ```
+1.  Make sure you have ESP-IDF v5.5.4 installed.
+2.  Full clean is recommended if changing paths: `idf.py fullclean`
+3.  Set the target: `idf.py set-target esp32s3`
+4.  Build, flash, and monitor: `idf.py build flash monitor`
