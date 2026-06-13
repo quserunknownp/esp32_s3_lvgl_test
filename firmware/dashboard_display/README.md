@@ -1,22 +1,45 @@
-# Software Documentation
+# ESP32-S3 LVGL EV Dashboard
 
-## Overview
-이 문서는 전기차(EV) 대시보드 프로젝트의 소프트웨어 아키텍처와 주요 구현 사항을 설명합니다. 메인 코드는 `firmware/` 디렉토리에 위치해 있습니다.
+A high-performance vehicle dashboard UI built with LVGL and ESP-IDF, specifically configured for ESP32-S3 N16R8 modules and an 800x480 RGB LCD. It receives telemetry data over CAN Bus (TWAI) and renders smooth 60fps animations.
 
-## 1. 개발 환경 (Development Environment)
-*   **Framework**: ESP-IDF v5.5.4
-*   **UI Library**: LVGL v8.4.0
-*   **Build System**: CMake / Ninja
+## Hardware Specifications
 
-## 2. 주요 소프트웨어 아키텍처
-*   **LVGL 렌더링 최적화**: 
-    *   `LVGL_TASK_MAX_DELAY_MS`를 15ms로 설정하여 60fps 주사율을 강제 유지합니다. (500ms 지연 버그 해결)
-    *   불연속적인 CAN 데이터(20Hz)를 부드럽게 표현하기 위해 `lv_anim_t` 기반의 값 보간(Interpolation) 애니메이션을 적극 활용합니다.
-*   **메모리 관리 (PSRAM)**: 
-    *   800x480 해상도의 프레임 버퍼(약 750KB)를 처리하기 위해 Octal PSRAM (80MHz)을 사용합니다.
-    *   EDMA Starvation 현상을 방지하기 위해 PCLK를 16~18MHz 수준으로 제한하여 CPU 렌더링 대역폭(약 30MB/s) 마진을 확보했습니다.
+*   **MCU**: ESP32-S3 (N16R8)
+    *   **Flash**: 16 MB (QIO)
+    *   **PSRAM**: 8 MB (Octal SPI @ 80MHz) - *Required for 800x480 Framebuffers*
+*   **Display**: 5.0" RGB LCD (QT-5000H40R79L-6N5W12 / ILI6485)
+    *   **Resolution**: 800 x 480
+    *   **Interface**: 16-bit RGB (RGB565)
+    *   **Optimal Pixel Clock**: `16 MHz` ~ `18 MHz` (Lowered from 25MHz to prevent EDMA starvation and PSRAM bandwidth bottlenecks during LVGL cache misses).
+*   **CAN Transceiver**: TJA1050 / SN65HVD230 (Connected to GPIO 1 & 2)
 
-## 3. 통신 프로토콜 (CAN / TWAI)
-*   **Baudrate**: 250 Kbps
-*   **수신 (RX)**: BMS 온도, 모터 RPM, 인버터 온도, SoC 데이터 파싱 (`0x10A`, `0x101`, `0x102` 등)
-*   **송신 (TX)**: 10번 핀 물리 버튼 입력 시 Sevcon 드라이브 프로파일(토크맵) 변경 명령(`0x201`)을 CAN으로 송신합니다.
+## Pin Configuration
+
+### RGB LCD Interface
+*   **Control Pins**: `PCLK`: 11, `HSYNC`: 12, `VSYNC`: 13, `DE`: 14
+*   **Red (R3~R7)**: 4, 5, 6, 7, 15
+*   **Green (G2~G7)**: 16, 17, 18, 8, 3, 9
+*   **Blue (B3~B7)**: 42, 41, 40, 39, 38
+
+### Peripherals
+*   **CAN TX**: GPIO 1
+*   **CAN RX**: GPIO 2
+*   **Mode Switch Button**: GPIO 10 (Internal Pull-up, active low)
+
+## Software Architecture & Features
+
+*   **LVGL Rendering**: Fixed to 60fps (`LVGL_TASK_MAX_DELAY_MS 15`) to ensure immediate UI updates. UI components use `lv_anim_t` to interpolate discrete CAN messages (e.g., 20Hz) into perfectly smooth visuals.
+*   **CAN Communication (TWAI)**: Operates at 250Kbps. Listens for 0x10A (RPM), 0x101 (Battery Temp), 0x102 (Inverter Temp), 0x103 (Motor Temp), and 0x104 (SoC).
+*   **Drive Mode Toggle**: Shorting GPIO 10 to GND toggles the torque mode.
+    *   UI: Top-left LED turns Green (ECO) or Red (SPORT).
+    *   CAN: Sends a 1-byte message to `0x201` (`0x00` or `0x01`) to switch the Sevcon Motor Controller's Drive Profile.
+*   **Dynamic Temperature Candles**: Thermal bars implement 3-stage color gradients (Green -> Yellow -> Red) based on safe operating limits.
+
+## Build and Flash
+
+1.  Make sure you have [ESP-IDF v5.5.4](https://github.com/espressif/esp-idf) installed.
+2.  Navigate to this directory: `cd firmware/dashboard_display`
+3.  Set the target: `idf.py set-target esp32s3`
+4.  Build, flash, and monitor: `idf.py build flash monitor`
+
+[⬅️ Back to Firmware Overview](../README.md) | [⬅️ Back to Main Repository](../../README.md)
