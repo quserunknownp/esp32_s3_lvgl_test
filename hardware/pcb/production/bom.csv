@@ -1,0 +1,5 @@
+﻿Designator,Footprint,Quantity,Value,LCSC Part #
+J1,FPC05,1,FC-05D40P11H20,C23398806
+"J2, J3",PinHeader_1x22_P2.54mm_Vertical,2,Conn_01x22_Pin,
+"J5, J7",Samtec_HPM-02-01-x-S_Straight_1x02_Pitch5.08mm,2,Conn_01x02_Pin,
+J6,PinHeader_1x06_P2.54mm_Vertical,1,Conn_01x06_Socket,
