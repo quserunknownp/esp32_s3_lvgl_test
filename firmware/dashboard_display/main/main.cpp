@@ -19,7 +19,7 @@ static const char *TAG = "LVGL_RGB_Test";
 #define EXAMPLE_LCD_PIXEL_CLOCK_HZ     (16 * 1000 * 1000) // 16 MHz (안정적인 16-bit 대역폭)
 
 // ESP32-S3-N16R8 Development Board RGB GPIO configuration
-// Pinmap based on C:\proj\01_s3_dashboard\pinmap.txt
+// Pinmap configuration for EV Dashboard
 
 #define EXAMPLE_PIN_NUM_HSYNC          (12)
 #define EXAMPLE_PIN_NUM_VSYNC          (13)
