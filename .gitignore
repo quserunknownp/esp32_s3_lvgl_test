@@ -17,3 +17,14 @@ dependencies.lock
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# KiCad
+*.kicad_prl
+*.kicad_wks
+*.bak
+*.bck
+*-bak
+*~
+_autosave-*
+fp-info-cache
+
